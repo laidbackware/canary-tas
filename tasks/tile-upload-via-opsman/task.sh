@@ -2,7 +2,9 @@
 
 set -euxo pipefail
 
-OM_TARGET=$(bosh int ${ENV_FILE} --path /target | sed s"/((domain))/${OM_VAR_domain}/")
+OM_TARGET=$(bosh int ${ENV_FILE} --path /target | \
+                            sed s"/((domain))/${OM_VAR_domain}/" | \
+                            sed s"/((foundation))/${OM_VAR_foundation}/")
 
 mkdir workdir
 cp ${ENV_FILE} workdir/env.yml
