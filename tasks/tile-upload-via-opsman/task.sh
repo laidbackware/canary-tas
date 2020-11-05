@@ -9,10 +9,11 @@ cp ${ENV_FILE} workdir/env.yml
 cp ${DOWNLOAD_CONFIG_FILE} workdir/download-config.yml
 cp ${PRODUCT_VARS_FILE} workdir/vars.yml
 
+bosh int ${TF_VARS_FILE} --path /ops_manager_ssh_private_key > workdir/om-ssh-key
+
 cd workdir
 
 # Extract OM SSH key
-bosh int ${TF_VARS_FILE} --path /ops_manager_ssh_private_key > om-ssh-key
 
 # Remove and S3 references from  download config
 sed '/s3-/d' workdir/download-config.yml
