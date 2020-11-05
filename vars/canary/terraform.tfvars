@@ -1,4 +1,4 @@
 environment_name = "canary"
 
-region = "eu-west-1"
-availability_zones = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+region = "eu-west-2"
+availability_zones = ["eu-west-2a", "eu-west-2b", "eu-west-2c"]
