@@ -70,30 +70,6 @@ networks-configuration:
       reserved_ip_ranges: ((pas_subnet_reserved_ip_ranges.2))
       availability_zone_names:
       - ((availability_zones.2))
-  
-  - name: pks
-    subnets:
-    - iaas_identifier: ((pks_subnet_ids.0))
-      cidr: ((pks_subnet_cidrs.0))
-      dns: 10.0.0.2
-      gateway: ((pks_subnet_gateways.0))
-      reserved_ip_ranges: ((pks_subnet_reserved_ip_ranges.0))
-      availability_zone_names:
-      - ((availability_zones.0))
-    - iaas_identifier: ((pks_subnet_ids.1))
-      cidr: ((pks_subnet_cidrs.1))
-      dns: 10.0.0.2
-      gateway: ((pks_subnet_gateways.1))
-      reserved_ip_ranges: ((pks_subnet_reserved_ip_ranges.1))
-      availability_zone_names:
-      - ((availability_zones.1))
-    - iaas_identifier: ((pks_subnet_ids.2))
-      cidr: ((pks_subnet_cidrs.2))
-      dns: 10.0.0.2
-      gateway: ((pks_subnet_gateways.2))
-      reserved_ip_ranges: ((pks_subnet_reserved_ip_ranges.2))
-      availability_zone_names:
-      - ((availability_zones.2))
 
 properties-configuration:
   director_configuration:
