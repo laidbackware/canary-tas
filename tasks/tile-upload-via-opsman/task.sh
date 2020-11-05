@@ -9,14 +9,13 @@ cp ${ENV_FILE} workdir/env.yml
 cp ${DOWNLOAD_CONFIG_FILE} workdir/download-config.yml
 cp ${PRODUCT_VARS_FILE} workdir/vars.yml
 
+# Extract OM SSH key
 bosh int ${TF_VARS_FILE} --path /ops_manager_ssh_private_key > workdir/om-ssh-key
 
 cd workdir
 
-# Extract OM SSH key
-
 # Remove and S3 references from  download config
-sed '/s3-/d' workdir/download-config.yml
+sed '/s3-/d' download-config.yml
 
 cat > download-upload.sh << EOF
 wget -O om https://github.com/pivotal-cf/om/releases/download/6.5.0/om-linux-6.5.0
