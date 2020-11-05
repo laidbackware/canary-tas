@@ -30,9 +30,6 @@ params:
 inputs:
 - name: config
 - name: terraform
-- name: paving-repo
-- name: oq
-- name: jq
 
 run:
   path: config/tasks/wipe-paving-terraform/task.sh

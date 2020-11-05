@@ -17,8 +17,7 @@ then
     exit 1
 fi
 
-cd ${ROOT_DIR}/paving-repo/${FOUNDATION}
-cp ${ROOT_DIR}/config/terraform/backend.tf .
+cd ${ROOT_DIR}/config/terraform/aws
 export TF_VAR_access_key="$(bosh int <(echo ${CLOUD_CREDS}) --path /client_id)"
 export TF_VAR_secret_key="$(bosh int <(echo ${CLOUD_CREDS}) --path /client_secret)"
 
