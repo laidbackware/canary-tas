@@ -22,4 +22,4 @@ params:
   
 
 run:
-  path: config/tasks/wrapper-delete-vm/task.sh
+  path: config/tasks/tile-upload-via-opsman/task.sh
