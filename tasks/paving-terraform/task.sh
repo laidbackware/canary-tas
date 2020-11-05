@@ -8,7 +8,7 @@ ROOT_DIR="$(pwd)"
 cp ${ROOT_DIR}/terraform/terraform-* /usr/local/bin/terraform
 chmod +x /usr/local/bin/terraform 
 
-cd ${ROOT_DIR}/config/terraform/${FOUNDATION}
+cd ${ROOT_DIR}/config/terraform/aws
 export TF_VAR_access_key="$(bosh int <(echo ${CLOUD_CREDS}) --path /client_id)"
 export TF_VAR_secret_key="$(bosh int <(echo ${CLOUD_CREDS}) --path  /client_secret)"
 
