@@ -2,7 +2,9 @@
 
 set -euxo pipefail
 
-OM_TARGET=$(bosh int config/${ENV_FILE} --path /target | sed s"/((domain))/${OM_VAR_domain}/")
+OM_TARGET=$(bosh int config/${ENV_FILE} --path /target | \
+                            sed s"/((domain))/${OM_VAR_domain}/" | \
+                            sed s"/((foundation))/${OM_VAR_foundation}/")
 
 if $(curl -k --output /dev/null --silent --head --fail -m 5 ${OM_TARGET})
 then

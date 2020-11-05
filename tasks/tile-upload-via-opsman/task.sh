@@ -8,6 +8,7 @@ OM_TARGET=$(bosh int ${ENV_FILE} --path /target | \
 
 # Remove and S3 references from  download config
 sed -i '/s3-/d' ${DOWNLOAD_CONFIG_FILE}
+sed -i '/stemcell/d' ${DOWNLOAD_CONFIG_FILE}
 
 mkdir -p workdir
 
@@ -23,10 +24,9 @@ chmod 600 om-ssh-key
 
 cat > download-upload.sh << EOF
 #!/bin/bash
+cd /tmp
 wget -O om https://github.com/pivotal-cf/om/releases/download/6.5.0/om-linux-6.5.0
 chmod +x om
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd ${SCRIPT_DIR}
 ./om -e env.yml download-product -c download-config.yml -o .
 ./om -e env.yml upload-product -p cf*.pivotal
 EOF
@@ -36,6 +36,7 @@ chmod +x download-upload.sh
 echo "Opsman target is: $OM_TARGET"
 
 # Add key to trust store
+mkdir -p ~/.ssh
 ssh-keyscan -t rsa $OM_TARGET > ~/.ssh/known_hosts
 
 # transfer files
