@@ -6,10 +6,10 @@ OM_TARGET=$(bosh int ${ENV_FILE} --path /target | \
                             sed s"/((domain))/${OM_VAR_domain}/" | \
                             sed s"/((foundation))/${OM_VAR_foundation}/")
 
-mkdir workdir
-
 # Remove and S3 references from  download config
-sed '/s3-/d' workdir/download-config.yml
+sed '/s3-/d' ${DOWNLOAD_CONFIG_FILE}
+
+mkdir workdir
 
 om interpolate -c ${ENV_FILE} > workdir/env.yml
 om interpolate -c ${DOWNLOAD_CONFIG_FILE} > workdir/download-config.yml
