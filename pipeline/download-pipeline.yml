@@ -61,7 +61,7 @@ resources:
     source:
         api_token: ((pivnet_token))
         product_slug: platform-automation
-        product_version: 4\.(.*)
+        product_version: 5\.(.*)
         sort_by: semver
 
 -   name: platform-automation-tasks
@@ -82,7 +82,7 @@ resources:
 -   name: platform-repo
     type: git
     source:
-        uri: https://github.com/laidbackware/pas-pks-on-aws-azure-gcp-vsphere.git
+        uri: https://github.com/laidbackware/canary-tas.git
         branch: ((branch))
 
 -   name: uaa-cli-github-release
@@ -118,6 +118,13 @@ resources:
         <<: *s3-common
         bucket: software
         regexp: uaa-linux-amd64-(.*)
+    
+-   name: jq-cli
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: software
+        regexp: jq-linux(.*)
 
 -   name: s5cmd
     type: s3
@@ -165,7 +172,7 @@ jobs:
             CONFIG_FILE: download-config/opsman.yml
             VARS_FILES: |
                 config/vars/download-vars/download-vars.yml 
-                config/vars/aws/common-vars.yml
+                config/vars/canary/install-tas-vars.yml
     -   put: opsman-product-aws
         params:
             file: downloaded-product/*
@@ -189,7 +196,7 @@ jobs:
             CONFIG_FILE: download-config/pas.yml
             VARS_FILES: |
                 config/vars/download-vars/download-vars.yml 
-                config/vars/aws/install-pas-vars.yml
+                config/vars/canary/install-pas-vars.yml
         output_mapping: {downloaded-stemcell: pas-stemcell}
     -   in_parallel:
             -   put: pas-product

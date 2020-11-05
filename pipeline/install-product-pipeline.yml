@@ -11,7 +11,7 @@ anchors:
         params:
             CONFIG_PATHS: |
                 config/download-config 
-                config/install-config/((foundation)) 
+                config/install-config/((iaas_type)) 
                 config/vars/((foundation))/env
             VARS_PATHS: |
                 config/vars/((foundation)) 
@@ -66,7 +66,7 @@ resources:
 -   name: platform-repo
     type: git
     source:
-        uri: https://github.com/laidbackware/pas-pks-on-aws-azure-gcp-vsphere.git
+        uri: https://github.com/laidbackware/canary-tas.git
         branch: ((branch))
 
 -   name: tf-output-yaml
@@ -117,6 +117,7 @@ jobs:
             S3_ENDPOINT: "((s3_endpoint))"
             CLOUD_CREDS: ((cloud_creds)) 
             TF_VAR_hosted_zone: "((domain))."
+            FOUNDATION: ((foundation))
         input_mapping:
             config: platform-repo
         file: platform-repo/tasks/paving-terraform/task.yml
@@ -388,7 +389,7 @@ jobs:
         file: platform-repo/tasks/wrapper-delete-installation/task.yml
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
-            IAAS_TYPE: ((iaas_stemcell))
+            IAAS_TYPE: ((iaas_type))
             FOUNDATION: ((foundation))
             OM_VAR_domain: ((domain))
             OM_VAR_om_login: ((om_login))
@@ -407,7 +408,7 @@ jobs:
                 config/vars/((foundation))/install-((product))-vars.yml 
                 config/vars/((foundation))/tf-output.yml
             OM_VAR_domain: ((domain))
-            IAAS_TYPE: ((iaas_stemcell))
+            IAAS_TYPE: ((iaas_type))
             OM_VAR_om_login: ((om_login))
             OM_VAR_cloud_creds: ((cloud_creds))
         input_mapping:
@@ -427,7 +428,7 @@ jobs:
             CLOUD_CREDS: ((cloud_creds)) 
             TF_VAR_hosted_zone: "((domain))."
             DOMAIN: ((domain))
-            IAAS_TYPE: ((iaas_stemcell))
+            IAAS_TYPE: ((iaas_type))
         input_mapping:
             config: platform-repo
         file: platform-repo/tasks/wipe-paving-terraform/task.yml
