@@ -1,0 +1,33 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  # source: 
+  #   repository: hashicorp/terraform
+  #   tag: 0.11.14
+params:
+  STATE_BUCKET_SECRET_KEY:
+  # - Required
+  # - Minio Secret
+  STATE_BUCKET_KEY_ID:
+  # - Required
+  # - Minio Access Key
+  STATE_BUCKET:
+  # - Required
+  # - Bucket where tf state will be stored
+  S3_ENDPOINT:
+  # - Required
+  # - URL of the Minio endpoint
+  CLOUD_CREDS:
+  # - used for Azure tenant and subscription
+
+inputs:
+- name: config
+- name: terraform
+# - name: paving-repo
+  
+outputs:
+- name: generated-tf-output
+
+run:
+  path: config/tasks/paving-terraform/task.sh

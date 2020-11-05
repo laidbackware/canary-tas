@@ -1,0 +1,232 @@
+---
+anchors:
+-   prepare-tasks-with-secrets: &prepare-tasks-with-secrets
+        image: platform-automation-image
+        file: platform-automation-tasks/tasks/prepare-tasks-with-secrets.yml
+        input_mapping:
+            tasks: platform-automation-tasks
+            config: platform-repo
+            vars: platform-repo
+        output_mapping:
+            tasks: platform-automation-tasks
+        params:
+            CONFIG_PATHS: config/download-config
+            VARS_PATHS: config/vars # required only if using vars
+
+-   s3-common: &s3-common
+        access_key_id: ((s3_access_key_id))
+        secret_access_key: ((s3_secret_access_key))
+        disable_ssl: ((s3_disable_ssl))
+        use_v2_signing: ((s3_use_v2_signing))
+        region_name: ((s3_region_name))
+        endpoint: ((s3_endpoint))
+
+- download-product-common: &download-product-common
+        image: platform-automation-image
+        input_mapping:
+            config: platform-repo
+        file: platform-automation-tasks/tasks/download-product.yml
+
+resource_types:
+-   name: pivnet
+    type: docker-image
+    source:
+        repository: pivotalcf/pivnet-resource
+        tag: latest-final
+
+resources:
+-   name: opsman-product-aws
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: pivnet-downloads
+        regexp: \[ops-manager,(.*)\]ops-manager-aws-.*
+
+-   name: pas-product
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: pivnet-downloads
+        regexp: \[elastic-runtime,(.*)\]cf-.*\.pivotal
+        
+-   name: pas-stemcell-aws
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: pivnet-downloads
+        regexp: \[stemcells-ubuntu-xenial,(.*)\]light-bosh-stemcell-(.*)-aws-xen-hvm-ubuntu-xenial-go_agent.tgz
+
+-   name: platform-automation-pivnet
+    type: pivnet
+    source:
+        api_token: ((pivnet_token))
+        product_slug: platform-automation
+        product_version: 4\.(.*)
+        sort_by: semver
+
+-   name: platform-automation-tasks
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: platform-automation
+        regexp: platform-automation-tasks-(.*).zip
+
+-   name: platform-automation-image
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: platform-automation
+        regexp: platform-automation-image-(.*).tgz
+
+
+-   name: platform-repo
+    type: git
+    source:
+        uri: https://github.com/laidbackware/pas-pks-on-aws-azure-gcp-vsphere.git
+        branch: ((branch))
+
+-   name: uaa-cli-github-release
+    type: github-release
+    check_every: 24h
+    source:
+        owner: cloudfoundry-incubator
+        repository: uaa-cli
+        globs:
+        - uaa-linux-amd64-*
+        
+-   name: jq-cli-github-release
+    type: github-release
+    check_every: 24h
+    source:
+        owner: stedolan
+        repository: jq
+        globs:
+        - jq-linux6*
+
+-   name: s5cmd-github-release
+    type: github-release
+    check_every: 24h
+    source:
+        owner: peak
+        repository: s5cmd
+        globs:
+        - s5cmd_*_Linux-64bit.tar.gz
+
+-   name: uaa-cli
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: software
+        regexp: uaa-linux-amd64-(.*)
+
+-   name: s5cmd
+    type: s3
+    source:
+        <<: *s3-common
+        bucket: software
+        regexp: s5cmd_(.*)_Linux-64bit.tar.gz
+
+-   name: terraform
+    type: s3
+    source:
+      <<: *s3-common
+      bucket: ((buckets.software))
+      regexp: terraform-0.(.*)
+      
+jobs:
+-   name: fetch-platform-automation
+    plan:
+    -   get: platform-automation-pivnet
+        trigger: true
+    -   in_parallel:
+        -   put: platform-automation-tasks
+            params:
+                file: platform-automation-pivnet/*tasks*.zip
+        -   put: platform-automation-image
+            params:
+                file: platform-automation-pivnet/*image*.tgz
+
+-   name: fetch-opsman
+    plan:
+    -   in_parallel:
+        -   get: platform-automation-image
+            params:
+                unpack: true
+        -   get: platform-automation-tasks
+            params:
+                unpack: true
+        -   get: platform-repo
+    -   task: prepare-tasks-with-secrets
+        <<: *prepare-tasks-with-secrets
+
+    -   task: download-opsman-image-aws
+        <<: *download-product-common
+        params:
+            CONFIG_FILE: download-config/opsman.yml
+            VARS_FILES: |
+                config/vars/download-vars/download-vars.yml 
+                config/vars/aws/common-vars.yml
+    -   put: opsman-product-aws
+        params:
+            file: downloaded-product/*
+
+-   name: fetch-pas
+    plan:
+    -   in_parallel:
+            -   get: platform-automation-image
+                params:
+                    unpack: true
+            -   get: platform-automation-tasks
+                params:
+                    unpack: true
+            -   get: platform-repo
+    -   task: prepare-tasks-with-secrets
+        <<: *prepare-tasks-with-secrets
+
+    -   task: download-pas-product-and-aws-stemcell
+        <<: *download-product-common
+        params:
+            CONFIG_FILE: download-config/pas.yml
+            VARS_FILES: |
+                config/vars/download-vars/download-vars.yml 
+                config/vars/aws/install-pas-vars.yml
+        output_mapping: {downloaded-stemcell: pas-stemcell}
+    -   in_parallel:
+            -   put: pas-product
+                params:
+                    file: downloaded-product/*.pivotal
+            -   put: pas-stemcell-aws
+                params:
+                    file: pas-stemcell/*.tgz
+
+# Fetch JQ first to allow 
+-   name: fetch-jq
+    plan:
+    -   get: jq-cli-github-release
+    -   put: jq-cli
+        params:
+            file: jq-cli-github-release/jq-linux6*
+
+-   name: fetch-base-tools
+    plan:
+    -   in_parallel:
+            -   get: uaa-cli-github-release
+            -   get: s5cmd-github-release
+            -   get: platform-repo
+            -   get: jq-cli
+                passed: ["fetch-jq"]
+                trigger: true
+ 
+    -   task: download-terraform-cli
+        file: platform-repo/tasks/download-terraform/task.yml        
+    -   put: terraform
+        params:
+            file: downloaded-product/terraform-*
+
+    -   put: uaa-cli
+        params:
+            file: uaa-cli-github-release/uaa-linux-amd64-*
+    
+    -   put: s5cmd
+        params:
+            file: s5cmd-github-release/s5cmd_*_Linux-64bit.tar.gz

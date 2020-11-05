@@ -1,0 +1,7 @@
+product: tas
+ntp_servers_string: 0.uk.pool.ntp.org
+product_version_regex: ^2\.10\..*$
+opsman_regex: ^2\.10\.\d+.*$
+opsman_pivnet_glob: "ops-manager-aws-*.yml"
+foundation: canary
+iaas_stemcell: aws

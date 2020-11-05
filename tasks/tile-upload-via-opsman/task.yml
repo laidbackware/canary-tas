@@ -1,0 +1,25 @@
+---
+platform: linux
+
+inputs:
+- name: config # contains the product configuration file
+
+
+params:
+  OM_VARS_ENV: OM_VAR
+  # Used by the wrapper script
+  
+  ENV:
+  OM_VAR_om_login:
+  # Used by the wrapper script to check if the deployment was removed
+  OM_VAR_domain:
+  # Used by the wrapper script to check if the deployment was removed
+  OM_VAR_decryption_passphrase: none
+  # Used to allow the env file to be interpolated, but not needed
+  DOWNLOAD_CONFIG:
+  PRODUCT_VARS:
+
+  
+
+run:
+  path: config/tasks/wrapper-delete-vm/task.sh
