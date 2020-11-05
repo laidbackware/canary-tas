@@ -8,11 +8,11 @@ OM_TARGET=$(bosh int ${ENV_FILE} --path /target | \
 
 mkdir workdir
 
-om interpolate -c ${ENV_FILE} > workdir/env.yml
-om interpolate -c ${DOWNLOAD_CONFIG_FILE} > workdir/download-config.yml
-
 # Remove and S3 references from  download config
 sed '/s3-/d' workdir/download-config.yml
+
+om interpolate -c ${ENV_FILE} > workdir/env.yml
+om interpolate -c ${DOWNLOAD_CONFIG_FILE} > workdir/download-config.yml
 
 # Extract OM SSH key
 bosh int ${TF_VARS_FILE} --path /ops_manager_ssh_private_key > workdir/om-ssh-key
