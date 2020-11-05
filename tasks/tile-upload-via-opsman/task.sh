@@ -7,28 +7,38 @@ OM_TARGET=$(bosh int ${ENV_FILE} --path /target | \
                             sed s"/((foundation))/${OM_VAR_foundation}/")
 
 # Remove and S3 references from  download config
-sed '/s3-/d' ${DOWNLOAD_CONFIG_FILE}
+sed -i '/s3-/d' ${DOWNLOAD_CONFIG_FILE}
 
-mkdir workdir
+mkdir -p workdir
 
 om interpolate -c ${ENV_FILE} > workdir/env.yml
-om interpolate -c ${DOWNLOAD_CONFIG_FILE} > workdir/download-config.yml
+om interpolate -c ${DOWNLOAD_CONFIG_FILE} -l ${PRODUCT_VARS_FILE}> workdir/download-config.yml
 
 # Extract OM SSH key
 bosh int ${TF_VARS_FILE} --path /ops_manager_ssh_private_key > workdir/om-ssh-key
 
 cd workdir
 
+chmod 600 om-ssh-key
+
 cat > download-upload.sh << EOF
+#!/bin/bash
 wget -O om https://github.com/pivotal-cf/om/releases/download/6.5.0/om-linux-6.5.0
 chmod +x om
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd ${SCRIPT_DIR}
 ./om -e env.yml download-product -c download-config.yml -o .
-./om upload-product -p cf*.pivotal
+./om -e env.yml upload-product -p cf*.pivotal
 EOF
 
 chmod +x download-upload.sh
 
-# transfer files
-scp -i om-ssh-key * ubuntu@${OM_TARGET}:/tmp/
+echo "Opsman target is: $OM_TARGET"
 
-scp -i om-ssh-key * ubuntu@${OM_TARGET} /tmp/download-upload.sh
+# Add key to trust store
+ssh-keyscan -t rsa $OM_TARGET > ~/.ssh/known_hosts
+
+# transfer files
+scp -i om-ssh-key ./* ubuntu@${OM_TARGET}:/tmp/
+
+ssh -i om-ssh-key ubuntu@${OM_TARGET} /tmp/download-upload.sh
