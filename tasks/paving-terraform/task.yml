@@ -20,6 +20,8 @@ params:
   # - URL of the Minio endpoint
   CLOUD_CREDS:
   # - used for Azure tenant and subscription
+  FOUNDATION:
+  # - used to find tf state file folder
 
 inputs:
 - name: config
