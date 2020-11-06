@@ -27,4 +27,4 @@ terraform init -backend-config="bucket=${STATE_BUCKET}" \
     -backend-config="access_key=${STATE_BUCKET_KEY_ID}"\
     -backend-config="secret_key=${STATE_BUCKET_SECRET_KEY}"
 
-terraform destroy -auto-approve -var-file=${ROOT_DIR}/config/vars/${FOUNDATION}/terraform.tfvars
+terraform destroy -auto-approve -var-file=${ROOT_DIR}/config/vars/${OM_VAR_foundation}/terraform.tfvars
