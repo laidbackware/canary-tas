@@ -15,9 +15,6 @@ params:
   STATE_BUCKET:
   # - Required
   # - Bucket where tf state will be stored
-  FOUNDATION:
-  # - Required
-  # - Name of foundation to be used to locate vars and label the state file
   PRODUCT:
   # - Required
   # pas or pks, lower case only
@@ -26,6 +23,8 @@ params:
   # - URL of the Minio endpoint
   CLOUD_CREDS:
   # - used for Azure tenant and subscription
+  OM_VAR_domain: 
+  OM_VAR_foundation: 
 
 inputs:
 - name: config
