@@ -8,7 +8,7 @@ ROOT_DIR="$(pwd)"
 cp ${ROOT_DIR}/terraform/terraform-* /usr/local/bin/terraform
 chmod +x /usr/local/bin/terraform
 
-ENV_FILE=vars/${FOUNDATION}/env/env.yml
+ENV_FILE=vars/${OM_VAR_foundation}/env/env.yml
 OM_TARGET=$(om interpolate -c config/${ENV_FILE} -s --path /target) || exit 1
 
 if $(curl -k --output /dev/null --silent --head --fail -m 5 ${OM_TARGET})
