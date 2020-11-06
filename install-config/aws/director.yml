@@ -6,13 +6,12 @@ az-configuration:
 - name: ((availability_zones.2))
   iaas_configuration_name: default
 iaas-configurations:
-- access_key_id: ((cloud_creds.client_id))
-  additional_cloud_properties: {}
+- additional_cloud_properties: {}
   encrypted: false
+  iam_instance_profile: canary-ops-manager
   key_pair_name: ((ops_manager_key_pair_name))
   name: default
   region: ((region))
-  secret_access_key: ((cloud_creds.client_secret))
   security_group: ((platform_vms_security_group_id))
   ssh_private_key: ((ops_manager_ssh_private_key))
 network-assignment:
@@ -127,6 +126,12 @@ resource-configuration:
       size_mb: automatic
     swap_as_percent_of_memory_size: automatic
 vmextensions-configuration:
+  - name: ssh-lb-security-groups
+    cloud_properties:
+      security_groups:
+      - ((ssh_lb_security_group_name))
+      - ((platform_vms_security_group_name))
+      target_groups: ((web_target_group_names))
   - name: web-lb-security-groups
     cloud_properties:
       security_groups:
@@ -135,7 +140,10 @@ vmextensions-configuration:
       target_groups: ((web_target_group_names))
   - name: om-instance-profile
     cloud_properties:
-      iam_instance_profile: pas-pks-ops-manager
+      iam_instance_profile: ((ops_manager_iam_instance_profile_name))
+  - name: blob-store-instance-profile
+    cloud_properties:
+      iam_instance_profile: ((tas_blobstore_iam_instance_profile_name))
 
 vmtypes-configuration: {}
 
