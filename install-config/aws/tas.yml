@@ -265,8 +265,32 @@ product-properties:
   .properties.syslog_use_tcp_for_file_forwarding_local_transport:
     value: false
   .properties.system_blobstore:
-    selected_option: internal
-    value: internal
+    selected_option: external
+    value: external
+  .properties.system_blobstore.external.buildpacks_bucket:
+    value: ((buildpacks_bucket_name))
+  .properties.system_blobstore.external.droplets_bucket:
+    value: ((droplets_bucket_name))
+  .properties.system_blobstore.external.encryption:
+    value: false
+  .properties.system_blobstore.external.endpoint:
+    value: https://s3.amazonaws.com
+  .properties.system_blobstore.external.iam_instance_profile_authentication:
+    value: true
+  .properties.system_blobstore.external.packages_bucket:
+    value: ((packages_bucket_name))
+  .properties.system_blobstore.external.path_style_s3_urls:
+    value: true
+  .properties.system_blobstore.external.region:
+    value: ((region))
+  .properties.system_blobstore.external.resources_bucket:
+    value: ((resources_bucket_name))
+  .properties.system_blobstore.external.secret_key:
+    value: {}
+  .properties.system_blobstore.external.signature_version:
+    value: "4"
+  .properties.system_blobstore.external.versioning:
+    value: true
   .properties.system_blobstore_backup_level:
     selected_option: all
     value: all
@@ -377,7 +401,8 @@ resource-config:
   cloud_controller:
     max_in_flight: 1
     additional_networks: []
-    additional_vm_extensions: []
+    additional_vm_extensions:
+    - blob-store-instance-profile
     elb_names: []
     instance_type:
       id: automatic
@@ -407,7 +432,8 @@ resource-config:
   diego_brain:
     max_in_flight: 1
     additional_networks: []
-    additional_vm_extensions: []
+    additional_vm_extensions:
+    - ssh-lb-security-groups
     elb_names: []
     instance_type:
       id: automatic

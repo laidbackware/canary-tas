@@ -14,8 +14,8 @@ anchors:
             VARS_PATHS: config/vars # required only if using vars
 
 -   s3-common: &s3-common
-        access_key_id: ((s3_access_key_id))
-        secret_access_key: ((s3_secret_access_key))
+        access_key_id: ((s3_access.client_id))
+        secret_access_key: ((s3_access.client_secret))
         disable_ssl: ((s3_disable_ssl))
         use_v2_signing: ((s3_use_v2_signing))
         region_name: ((s3_region_name))
@@ -42,14 +42,14 @@ resources:
         bucket: pivnet-downloads
         regexp: \[ops-manager,(.*)\]ops-manager-aws-.*
 
--   name: pas-product
+-   name: tas-product
     type: s3
     source:
         <<: *s3-common
         bucket: pivnet-downloads
         regexp: \[elastic-runtime,(.*)\]cf-.*\.pivotal
         
--   name: pas-stemcell-aws
+-   name: tas-stemcell-aws
     type: s3
     source:
         <<: *s3-common
@@ -172,12 +172,12 @@ jobs:
             CONFIG_FILE: download-config/opsman.yml
             VARS_FILES: |
                 config/vars/download-vars/download-vars.yml 
-                config/vars/canary/install-tas-vars.yml
+                config/vars/((foundation))/install-tas-vars.yml
     -   put: opsman-product-aws
         params:
             file: downloaded-product/*
 
--   name: fetch-pas
+-   name: fetch-tas
     plan:
     -   in_parallel:
             -   get: platform-automation-image
@@ -190,21 +190,21 @@ jobs:
     -   task: prepare-tasks-with-secrets
         <<: *prepare-tasks-with-secrets
 
-    -   task: download-pas-product-and-aws-stemcell
+    -   task: download-tas-product-and-aws-stemcell
         <<: *download-product-common
         params:
-            CONFIG_FILE: download-config/pas.yml
+            CONFIG_FILE: download-config/tas.yml
             VARS_FILES: |
                 config/vars/download-vars/download-vars.yml 
-                config/vars/canary/install-pas-vars.yml
-        output_mapping: {downloaded-stemcell: pas-stemcell}
+                config/vars/((foundation))/install-tas-vars.yml
+        output_mapping: {downloaded-stemcell: tas-stemcell}
     -   in_parallel:
-            -   put: pas-product
+            -   put: tas-product
                 params:
                     file: downloaded-product/*.pivotal
-            -   put: pas-stemcell-aws
+            -   put: tas-stemcell-aws
                 params:
-                    file: pas-stemcell/*.tgz
+                    file: tas-stemcell/*.tgz
 
 # Fetch JQ first to allow 
 -   name: fetch-jq

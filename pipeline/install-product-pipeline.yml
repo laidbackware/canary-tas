@@ -18,35 +18,39 @@ anchors:
                 config/vars/download-vars
 
 -   s3-common: &s3-common
-        access_key_id: ((s3_access_key_id))
-        secret_access_key: ((s3_secret_access_key))
+        access_key_id: ((s3_access.client_id))
+        secret_access_key: ((s3_access.client_secret))
         disable_ssl: ((s3_disable_ssl))
         use_v2_signing: ((s3_use_v2_signing))
         region_name: ((s3_region_name))
         endpoint: ((s3_endpoint))
 
-- download-product-common: &download-product-common
-        image: platform-automation-image
-        input_mapping:
-            config: platform-repo
-        file: platform-automation-tasks/tasks/download-product.yml
+-   platform-automation-image: &platform-automation-image
+        get: platform-automation-image
+        params:
+            unpack: true
 
-- add-terraform-yaml: &add-terraform-yaml
-    image: platform-automation-image
-    config:
-        platform: linux
-        inputs: 
-        - name: platform-repo
-        - name: tf-output-yaml
-        outputs:
-        - name: platform-repo
-        run:
-            path: bash
-            args:
-            - -exc
-            - |
-                # Add terraform outputs into the vars directory
-                cp tf-output-yaml/tf-output-*.yml platform-repo/vars/((foundation))/tf-output.yml
+-   platform-automation-tasks: &platform-automation-tasks
+        get: platform-automation-tasks
+        params:
+            unpack: true
+
+-   add-terraform-yaml: &add-terraform-yaml
+        image: platform-automation-image
+        config:
+            platform: linux
+            inputs: 
+            - name: platform-repo
+            - name: tf-output-yaml
+            outputs:
+            - name: platform-repo
+            run:
+                path: bash
+                args:
+                - -exc
+                - |
+                    # Add terraform outputs into the vars directory
+                    cp tf-output-yaml/tf-output-*.yml platform-repo/vars/((foundation))/tf-output.yml
 
 resources:
 -   name: platform-automation-tasks
@@ -99,20 +103,16 @@ jobs:
     serial: true
     plan:
     -   in_parallel:
-        -   get: platform-automation-image
-            params:
-                unpack: true
-        -   get: platform-automation-tasks
-            params:
-                unpack: true
+        -   <<: *platform-automation-image
+        -   <<: *platform-automation-tasks
         -   get: platform-repo
         -   get: terraform
 
     -   task: paving-terraform
         image: platform-automation-image
         params:
-            STATE_BUCKET_SECRET_KEY: ((s3_secret_access_key))
-            STATE_BUCKET_KEY_ID: ((s3_access_key_id))
+            STATE_BUCKET_SECRET_KEY: ((s3_access.client_secret))
+            STATE_BUCKET_KEY_ID: ((s3_access.client_id))
             STATE_BUCKET: ((buckets.terraform_state))
             S3_ENDPOINT: "((s3_endpoint))"
             CLOUD_CREDS: ((cloud_creds)) 
@@ -131,14 +131,10 @@ jobs:
     serial: true
     plan:
     -   in_parallel:
-        -   get: platform-automation-image
+        -   <<: *platform-automation-image
             passed: ["pave-infra"]
-            params:
-                unpack: true
-        -   get: platform-automation-tasks
+        -   <<: *platform-automation-tasks
             passed: ["pave-infra"]
-            params:
-                unpack: true
         -   get: platform-repo
             passed: ["pave-infra"]
             trigger: true
@@ -173,11 +169,11 @@ jobs:
             config: platform-repo
         params:
             STATE_FILE: om-state-$timestamp.yml
-            OPSMAN_CONFIG_FILE: install-config/((foundation))/opsman.yml
+            OPSMAN_CONFIG_FILE: install-config/((iaas_type))/opsman.yml
             VARS_FILES: |
                 config/vars/((foundation))/install-((product))-vars.yml 
                 config/vars/((foundation))/tf-output.yml
-            OM_VAR_aws_domain: ((domain))
+            OM_VAR_foundation: ((foundation))
         ensure: &put-state
             do:
             -   put: state
@@ -190,7 +186,8 @@ jobs:
         attempts: 20
         params:
           ENV_FILE: vars/((foundation))/env/env.yml
-          AUTH_CONFIG_FILE: install-config/((foundation))/auth.yml
+          AUTH_CONFIG_FILE: install-config/((iaas_type))/auth.yml
+          OM_VAR_foundation: ((foundation))
         input_mapping:
           env: platform-repo
           config: platform-repo
@@ -200,10 +197,11 @@ jobs:
         file: platform-automation-tasks/tasks/configure-director.yml
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
-            DIRECTOR_CONFIG_FILE: install-config/((foundation))/director.yml
+            DIRECTOR_CONFIG_FILE: install-config/((iaas_type))/director.yml
             VARS_FILES: |
                 config/vars/((foundation))/install-((product))-vars.yml
                 config/vars/((foundation))/tf-output.yml
+            OM_VAR_foundation: ((foundation))
         input_mapping:
           config: platform-repo
           env: platform-repo
@@ -215,25 +213,23 @@ jobs:
             env: platform-repo
         params:
           ENV_FILE: vars/((foundation))/env/env.yml
+          OM_VAR_foundation: ((foundation))
 
 -   name: upload-and-stage-((product))
     serial: true
     serial_groups: [ install ]
     plan:
     -   in_parallel:
-        -   get: platform-automation-image
+        -   <<: *platform-automation-image
             passed: [ install-opsman ]
-            params:
-                unpack: true
-        -   get: platform-automation-tasks
+        -   <<: *platform-automation-tasks
             passed: [ install-opsman ]
-            params:
-                unpack: true
         -   get: platform-repo
-            passed: [ install-opsman  ]
+            passed: [ install-opsman ]
             trigger: true
         -   get: tf-output-yaml
-            passed: [ install-opsman  ]
+            passed: [ install-opsman ]
+
     -   task: add-terraform-yaml
         <<: *add-terraform-yaml  
     -   task: prepare-tasks-with-secrets
@@ -243,13 +239,14 @@ jobs:
         image: platform-automation-image
         file: platform-repo/tasks/tile-upload-via-opsman/task.yml
         params:
-            ENV_FILE: config/vars/(foundation))/env/env.yml
+            ENV_FILE: config/vars/((foundation))/env/env.yml
             OM_VAR_om_login: ((om_login))
             OM_VAR_domain: ((domain))
+            OM_VAR_foundation: ((foundation))
             OM_VAR_pivnet_token: ((pivnet_token))
             DOWNLOAD_CONFIG_FILE: config/download-config/tas.yml
-            PRODUCT_VARS_FILE: config/vars/(foundation))/install-tas-vars.yml
-            TF_VARS_FILE: config/vars/(foundation))/tf-output.yml
+            PRODUCT_VARS_FILE: config/vars/((foundation))/install-tas-vars.yml
+            TF_VARS_FILE: config/vars/((foundation))/tf-output.yml
         input_mapping:
             config: platform-repo
 
@@ -262,11 +259,13 @@ jobs:
             VARS_FILES: |
                 config/vars/download-vars/download-vars.yml 
                 config/vars/((foundation))/install-((product))-vars.yml
+            OM_VAR_foundation: ((foundation))
         input_mapping:
             config: platform-repo
         output_mapping:
             downloaded-product: ((product))-product
             downloaded-stemcell: ((product))-stemcell
+
     -   task: upload-and-stage-product
         image: platform-automation-image
         file: platform-automation-tasks/tasks/upload-and-stage-product.yml
@@ -276,6 +275,8 @@ jobs:
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
             OM_REQUEST_TIMEOUT: 10000
+            OM_VAR_foundation: ((foundation))
+
     -   task: upload-((product))-stemcell
         image: platform-automation-image
         file: platform-automation-tasks/tasks/upload-stemcell.yml
@@ -284,25 +285,23 @@ jobs:
             stemcell: ((product))-stemcell
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
+            OM_VAR_foundation: ((foundation))
 
 -   name: configure-((product))
     serial: true
     serial_groups: [ install ]
     plan:
     -   in_parallel:
-        -   get: platform-automation-image
-            params:
-                unpack: true
+        -   <<: *platform-automation-image
             passed: [ upload-and-stage-((product)) ]
-        -   get: platform-automation-tasks
-            params:
-                unpack: true
+        -   <<: *platform-automation-tasks
             passed: [ upload-and-stage-((product)) ]
         -   get: platform-repo
-            # passed: [ upload-and-stage-((product))  ]
-            # # trigger: true
+            passed: [ upload-and-stage-((product)) ]
+            trigger: true
         -   get: tf-output-yaml
-            passed: [ upload-and-stage-((product))  ]
+            passed: [ upload-and-stage-((product)) ]
+
     -   task: add-terraform-yaml
         <<: *add-terraform-yaml  
     -   task: prepare-tasks-with-secrets
@@ -315,34 +314,33 @@ jobs:
             config: platform-repo
             env: platform-repo
         params:
-            CONFIG_FILE: install-config/((foundation))/((product)).yml
+            CONFIG_FILE: install-config/((iaas_type))/((product)).yml
             VARS_FILES: |
                 config/vars/((foundation))/install-((product))-vars.yml 
                 config/vars/((foundation))/tf-output.yml
             ENV_FILE: vars/((foundation))/env/env.yml
+            OM_VAR_foundation: ((foundation))
 
 -   name: apply-product-changes
     serial: true
     serial_groups: [ install ]
     plan:
     -   in_parallel:
-        -   get: platform-automation-image
-            params:
-                unpack: true
-            passed: [ configure-((product)) ]
-        -   get: platform-automation-tasks
-            params:
-                unpack: true
-            passed: [ configure-((product)) ]
+        -   <<: *platform-automation-image
+            passed: [ configure-((product))  ]
+        -   <<: *platform-automation-tasks
+            passed: [ configure-((product))  ]
         -   get: platform-repo
             passed: [ configure-((product))  ]
             trigger: true
         -   get: tf-output-yaml
             passed: [ configure-((product))  ]
+
     -   task: add-terraform-yaml
         <<: *add-terraform-yaml  
     -   task: prepare-tasks-with-secrets
         <<: *prepare-tasks-with-secrets
+
     -   task: pre-deploy-check
         image: platform-automation-image
         file: platform-automation-tasks/tasks/pre-deploy-check.yml
@@ -350,6 +348,8 @@ jobs:
             env: platform-repo
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
+            OM_VAR_foundation: ((foundation))
+
     -   task: apply-product-changes
         image: platform-automation-image
         file: platform-automation-tasks/tasks/apply-changes.yml
@@ -357,6 +357,8 @@ jobs:
             env: platform-repo
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
+            OM_VAR_foundation: ((foundation))
+
     -   task: check-pending-changes
         image: platform-automation-image
         file: platform-automation-tasks/tasks/check-pending-changes.yml
@@ -365,16 +367,13 @@ jobs:
         params:
             ALLOW_PENDING_CHANGES: true
             ENV_FILE: vars/((foundation))/env/env.yml
+            OM_VAR_foundation: ((foundation))
 
 -   name: wipe-env
     plan:
     -   in_parallel:
-        -   get: platform-automation-image
-            params:
-                unpack: true
-        -   get: platform-automation-tasks
-            params:
-                unpack: true
+        -   <<: *platform-automation-image
+        -   <<: *platform-automation-tasks
         -   get: platform-repo
         -   get: state
         -   get: terraform
@@ -392,6 +391,7 @@ jobs:
             IAAS_TYPE: ((iaas_type))
             FOUNDATION: ((foundation))
             OM_VAR_domain: ((domain))
+            OM_VAR_foundation: ((foundation))
             OM_VAR_om_login: ((om_login))
         input_mapping:
             env: platform-repo
@@ -403,11 +403,12 @@ jobs:
         params:
             ENV_FILE: vars/((foundation))/env/env.yml
             STATE_FILE: om-state-$timestamp.yml
-            OPSMAN_CONFIG_FILE: install-config/((foundation))/opsman.yml
+            OPSMAN_CONFIG_FILE: install-config/((iaas_type))/opsman.yml
             VARS_FILES: |
                 config/vars/((foundation))/install-((product))-vars.yml 
                 config/vars/((foundation))/tf-output.yml
             OM_VAR_domain: ((domain))
+            OM_VAR_foundation: ((foundation))
             IAAS_TYPE: ((iaas_type))
             OM_VAR_om_login: ((om_login))
             OM_VAR_cloud_creds: ((cloud_creds))
@@ -419,16 +420,18 @@ jobs:
     -   task: wipe-paving-terraform
         image: platform-automation-image
         params:
-            STATE_BUCKET_SECRET_KEY: ((s3_secret_access_key))
-            STATE_BUCKET_KEY_ID: ((s3_access_key_id))
+            STATE_BUCKET_SECRET_KEY: ((s3_access.client_secret))
+            STATE_BUCKET_KEY_ID: ((s3_access.client_id))
             STATE_BUCKET: ((buckets.terraform_state))
-            FOUNDATION: ((foundation))
+            # FOUNDATION: ((foundation))
             PRODUCT: ((product))
             S3_ENDPOINT: "((s3_endpoint))"
             CLOUD_CREDS: ((cloud_creds)) 
             TF_VAR_hosted_zone: "((domain))."
-            DOMAIN: ((domain))
+            # DOMAIN: ((domain))
             IAAS_TYPE: ((iaas_type))
+            OM_VAR_domain: ((domain))
+            OM_VAR_foundation: ((foundation))
         input_mapping:
             config: platform-repo
         file: platform-repo/tasks/wipe-paving-terraform/task.yml
