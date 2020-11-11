@@ -280,7 +280,7 @@ product-properties:
   .properties.system_blobstore.external.packages_bucket:
     value: ((packages_bucket_name))
   .properties.system_blobstore.external.path_style_s3_urls:
-    value: true
+    value: false
   .properties.system_blobstore.external.region:
     value: ((region))
   .properties.system_blobstore.external.resources_bucket:
