@@ -94,8 +94,6 @@ data "aws_iam_policy_document" "ops-manager" {
     resources = compact([
       aws_iam_role.ops-manager.arn,
       aws_iam_role.pas-blobstore.arn,
-      aws_iam_role.pks-master.arn,
-      aws_iam_role.pks-worker.arn,
     ])
   }
 
@@ -160,24 +158,7 @@ resource "aws_iam_role" "pas-blobstore" {
     create_before_destroy = true
   }
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": [
-          "ec2.amazonaws.com"
-        ]
-      },
-      "Action": [
-        "sts:AssumeRole"
-      ]
-    }
-  ]
-}
-EOF
+  # assume_role_policy = data.aws_iam_policy_document.assume-role-policy.json
 }
 
 // NOTE: here because it gets consumed by the opsmanager policy
@@ -190,26 +171,4 @@ data "aws_iam_policy_document" "assume-role-policy" {
       identifiers = ["ec2.amazonaws.com"]
     }
   }
-}
-
-// NOTE: here because it gets consumed by the opsmanager policy
-resource "aws_iam_role" "pks-master" {
-  name = "${var.environment_name}-pks-master"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  assume_role_policy = data.aws_iam_policy_document.assume-role-policy.json
-}
-
-// NOTE: here because it gets consumed by the opsmanager policy
-resource "aws_iam_role" "pks-worker" {
-  name = "${var.environment_name}-pks-worker"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  assume_role_policy = data.aws_iam_policy_document.assume-role-policy.json
 }
