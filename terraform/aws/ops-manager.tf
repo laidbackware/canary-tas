@@ -158,7 +158,7 @@ resource "aws_iam_role" "pas-blobstore" {
     create_before_destroy = true
   }
 
-  # assume_role_policy = data.aws_iam_policy_document.assume-role-policy.json
+  assume_role_policy = data.aws_iam_policy_document.assume-role-policy.json
 }
 
 // NOTE: here because it gets consumed by the opsmanager policy
