@@ -1,20 +1,9 @@
 ---
-# stemcell-iaas: vmware
-
-harbor_stemcell_version: "621.84"
-harbor_product_version_regex: ^2\..*\..*$
-
-## Required unless `s3-auth-method` is `iam`
-s3_disable_ssl: true
-s3_use_v2_signing: true
-s3_region_name: None
-s3_endpoint: http://192.168.16.3:9080
+s3_region_name: eu-west-2
 buckets:
-  pivnet_products: pivnet-downloads
-  installation: installation
-  platform_automation: platform-automation
-  opsman_state: opsman-state
-  terraform_state: terraform-state
-  software: software
-  vmware_products: vmware-products
-  bosh_addons: bosh-addons
+  pivnet_products: cp-products-bucket-89403
+  installation: cp-state-bucket-89403
+  platform_automation: cp-products-bucket-89403
+  opsman_state: cp-state-bucket-89403
+  terraform_state: cp-state-bucket-89403
+  software: cp-products-bucket-89403
