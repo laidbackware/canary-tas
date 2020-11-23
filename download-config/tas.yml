@@ -5,7 +5,6 @@ pivnet-product-slug: elastic-runtime
 product-version-regex: ((product_version_regex))
 stemcell-iaas: ((iaas_type))
 
-s3-access-key-id: ((s3_access.client_id))
-s3-secret-access-key: ((s3_access.client_secret))
+s3-auth-type: iam
 s3-bucket: ((buckets.pivnet_products))
 s3-region-name: ((s3_region_name))
