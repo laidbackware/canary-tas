@@ -20,10 +20,8 @@ anchors:
 -   s3-common: &s3-common
         access_key_id: ((s3_access.client_id))
         secret_access_key: ((s3_access.client_secret))
-        disable_ssl: ((s3_disable_ssl))
-        use_v2_signing: ((s3_use_v2_signing))
+        session_token: ((s3_access.session_token))
         region_name: ((s3_region_name))
-        endpoint: ((s3_endpoint))
 
 -   platform-automation-image: &platform-automation-image
         get: platform-automation-image
@@ -57,14 +55,14 @@ resources:
     type: s3
     source:
         <<: *s3-common
-        bucket: platform-automation
+        bucket: ((buckets.platform_automation))
         regexp: platform-automation-tasks-(.*).zip
 
 -   name: platform-automation-image
     type: s3
     source:
         <<: *s3-common
-        bucket: platform-automation
+        bucket: ((buckets.platform_automation))
         regexp: platform-automation-image-(.*).tgz
 
 -   name: platform-repo
@@ -90,41 +88,41 @@ resources:
         initial_content_text: '{}'
 
 # Binaries
--   name: terraform
-    type: s3
-    source:
-      <<: *s3-common
-      bucket: ((buckets.software))
-      regexp: terraform-0.13.(.*)
+# -   name: terraform
+#     type: s3
+#     source:
+#       <<: *s3-common
+#       bucket: ((buckets.software))
+#       regexp: terraform-0.13.(.*)
 
 jobs:
--   name: pave-infra
-    serial_groups: [ install ]
-    serial: true
-    plan:
-    -   in_parallel:
-        -   <<: *platform-automation-image
-        -   <<: *platform-automation-tasks
-        -   get: platform-repo
-        -   get: terraform
+# -   name: pave-infra
+#     serial_groups: [ install ]
+#     serial: true
+#     plan:
+#     -   in_parallel:
+#         -   <<: *platform-automation-image
+#         -   <<: *platform-automation-tasks
+#         -   get: platform-repo
+#         -   get: terraform
 
-    -   task: paving-terraform
-        image: platform-automation-image
-        params:
-            STATE_BUCKET_SECRET_KEY: ((s3_access.client_secret))
-            STATE_BUCKET_KEY_ID: ((s3_access.client_id))
-            STATE_BUCKET: ((buckets.terraform_state))
-            S3_ENDPOINT: "((s3_endpoint))"
-            CLOUD_CREDS: ((cloud_creds)) 
-            TF_VAR_hosted_zone: "((domain))."
-            FOUNDATION: ((foundation))
-        input_mapping:
-            config: platform-repo
-        file: platform-repo/tasks/paving-terraform/task.yml
-        ensure:
-          put: tf-output-yaml
-          params:
-            file: generated-tf-output/tf-output-*.yml
+#     -   task: paving-terraform
+#         image: platform-automation-image
+#         params:
+#             STATE_BUCKET_SECRET_KEY: ((s3_access.client_secret))
+#             STATE_BUCKET_KEY_ID: ((s3_access.client_id))
+#             STATE_BUCKET: ((buckets.terraform_state))
+#             S3_ENDPOINT: "((s3_endpoint))"
+#             CLOUD_CREDS: ((cloud_creds)) 
+#             TF_VAR_hosted_zone: "((domain))."
+#             FOUNDATION: ((foundation))
+#         input_mapping:
+#             config: platform-repo
+#         file: platform-repo/tasks/paving-terraform/task.yml
+#         ensure:
+#           put: tf-output-yaml
+#           params:
+#             file: generated-tf-output/tf-output-*.yml
 
 -   name: install-opsman
     serial_groups: [ install ]
@@ -132,15 +130,10 @@ jobs:
     plan:
     -   in_parallel:
         -   <<: *platform-automation-image
-            passed: ["pave-infra"]
         -   <<: *platform-automation-tasks
-            passed: ["pave-infra"]
         -   get: platform-repo
-            passed: ["pave-infra"]
-            trigger: true
         -   get: state
         -   get: tf-output-yaml
-            passed: ["pave-infra"]
     
     -   task: add-terraform-yaml
         <<: *add-terraform-yaml  
@@ -170,6 +163,7 @@ jobs:
         params:
             STATE_FILE: om-state-$timestamp.yml
             OPSMAN_CONFIG_FILE: install-config/((iaas_type))/opsman.yml
+            AWS_SESSION_TOKEN: ((s3_access.session_token))
             VARS_FILES: |
                 config/vars/((foundation))/install-((product))-vars.yml 
                 config/vars/((foundation))/tf-output.yml
@@ -376,7 +370,7 @@ jobs:
         -   <<: *platform-automation-tasks
         -   get: platform-repo
         -   get: state
-        -   get: terraform
+        # -   get: terraform
         -   get: tf-output-yaml
     -   task: add-terraform-yaml
         <<: *add-terraform-yaml  
@@ -417,21 +411,21 @@ jobs:
             env: platform-repo
         ensure: *put-state
 
-    -   task: wipe-paving-terraform
-        image: platform-automation-image
-        params:
-            STATE_BUCKET_SECRET_KEY: ((s3_access.client_secret))
-            STATE_BUCKET_KEY_ID: ((s3_access.client_id))
-            STATE_BUCKET: ((buckets.terraform_state))
-            # FOUNDATION: ((foundation))
-            PRODUCT: ((product))
-            S3_ENDPOINT: "((s3_endpoint))"
-            CLOUD_CREDS: ((cloud_creds)) 
-            TF_VAR_hosted_zone: "((domain))."
-            # DOMAIN: ((domain))
-            IAAS_TYPE: ((iaas_type))
-            OM_VAR_domain: ((domain))
-            OM_VAR_foundation: ((foundation))
-        input_mapping:
-            config: platform-repo
-        file: platform-repo/tasks/wipe-paving-terraform/task.yml
+    # -   task: wipe-paving-terraform
+    #     image: platform-automation-image
+    #     params:
+    #         STATE_BUCKET_SECRET_KEY: ((s3_access.client_secret))
+    #         STATE_BUCKET_KEY_ID: ((s3_access.client_id))
+    #         STATE_BUCKET: ((buckets.terraform_state))
+    #         # FOUNDATION: ((foundation))
+    #         PRODUCT: ((product))
+    #         S3_ENDPOINT: "((s3_endpoint))"
+    #         CLOUD_CREDS: ((cloud_creds)) 
+    #         TF_VAR_hosted_zone: "((domain))."
+    #         # DOMAIN: ((domain))
+    #         IAAS_TYPE: ((iaas_type))
+    #         OM_VAR_domain: ((domain))
+    #         OM_VAR_foundation: ((foundation))
+    #     input_mapping:
+    #         config: platform-repo
+    #     file: platform-repo/tasks/wipe-paving-terraform/task.yml

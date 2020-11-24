@@ -62,13 +62,10 @@ locals {
     ops_manager_subnet_id                 = aws_subnet.public-subnet[0].id
     ops_manager_public_ip                 = aws_eip.ops-manager.public_ip
     ops_manager_dns                       = aws_route53_record.ops-manager.name
-    ops_manager_iam_user_access_key       = aws_iam_access_key.ops-manager.id
-    ops_manager_iam_user_secret_key       = aws_iam_access_key.ops-manager.secret
     ops_manager_iam_instance_profile_name = aws_iam_instance_profile.ops-manager.name
     ops_manager_key_pair_name             = aws_key_pair.ops-manager.key_name
     ops_manager_ssh_public_key            = tls_private_key.ops-manager.public_key_openssh
     ops_manager_ssh_private_key           = tls_private_key.ops-manager.private_key_pem
-    ops_manager_bucket                    = aws_s3_bucket.ops-manager-bucket.bucket
     ops_manager_security_group_id         = aws_security_group.ops-manager.id
     ops_manager_security_group_name       = aws_security_group.ops-manager.name
 

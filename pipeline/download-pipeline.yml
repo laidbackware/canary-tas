@@ -16,10 +16,8 @@ anchors:
 -   s3-common: &s3-common
         access_key_id: ((s3_access.client_id))
         secret_access_key: ((s3_access.client_secret))
-        disable_ssl: ((s3_disable_ssl))
-        use_v2_signing: ((s3_use_v2_signing))
+        session_token: ((s3_access.session_token))
         region_name: ((s3_region_name))
-        endpoint: ((s3_endpoint))
 
 - download-product-common: &download-product-common
         image: platform-automation-image
@@ -39,21 +37,21 @@ resources:
     type: s3
     source:
         <<: *s3-common
-        bucket: pivnet-downloads
+        bucket: ((buckets.pivnet_products))
         regexp: \[ops-manager,(.*)\]ops-manager-aws-.*
 
 -   name: tas-product
     type: s3
     source:
         <<: *s3-common
-        bucket: pivnet-downloads
+        bucket: ((buckets.pivnet_products))
         regexp: \[elastic-runtime,(.*)\]cf-.*\.pivotal
         
 -   name: tas-stemcell-aws
     type: s3
     source:
         <<: *s3-common
-        bucket: pivnet-downloads
+        bucket: ((buckets.pivnet_products))
         regexp: \[stemcells-ubuntu-xenial,(.*)\]light-bosh-stemcell-(.*)-aws-xen-hvm-ubuntu-xenial-go_agent.tgz
 
 -   name: platform-automation-pivnet
@@ -61,21 +59,21 @@ resources:
     source:
         api_token: ((pivnet_token))
         product_slug: platform-automation
-        product_version: 5\.(.*)
+        product_version: 5\.0\.7
         sort_by: semver
 
 -   name: platform-automation-tasks
     type: s3
     source:
         <<: *s3-common
-        bucket: platform-automation
+        bucket: ((buckets.platform_automation))
         regexp: platform-automation-tasks-(.*).zip
 
 -   name: platform-automation-image
     type: s3
     source:
         <<: *s3-common
-        bucket: platform-automation
+        bucket: ((buckets.platform_automation))
         regexp: platform-automation-image-(.*).tgz
 
 
@@ -116,21 +114,21 @@ resources:
     type: s3
     source:
         <<: *s3-common
-        bucket: software
+        bucket: ((buckets.software))
         regexp: uaa-linux-amd64-(.*)
     
 -   name: jq-cli
     type: s3
     source:
         <<: *s3-common
-        bucket: software
+        bucket: ((buckets.software))
         regexp: jq-linux(.*)
 
 -   name: s5cmd
     type: s3
     source:
         <<: *s3-common
-        bucket: software
+        bucket: ((buckets.software))
         regexp: s5cmd_(.*)_Linux-64bit.tar.gz
 
 -   name: terraform

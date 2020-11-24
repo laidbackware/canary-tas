@@ -17,10 +17,6 @@ resource "tls_private_key" "ops-manager" {
   rsa_bits  = "4096"
 }
 
-resource "aws_iam_access_key" "ops-manager" {
-  user = aws_iam_user.ops-manager.name
-}
-
 resource "aws_iam_policy" "ops-manager-role" {
   name   = "${var.environment_name}-ops-manager-role"
   policy = data.aws_iam_policy_document.ops-manager.json
@@ -68,17 +64,6 @@ resource "aws_iam_instance_profile" "ops-manager" {
   }
 }
 
-resource "aws_iam_user" "ops-manager" {
-  force_destroy = true
-  name          = "${var.environment_name}-ops-manager"
-}
-
-resource "aws_iam_user_policy" "ops-manager" {
-  name   = "${var.environment_name}-ops-manager-policy"
-  user   = aws_iam_user.ops-manager.name
-  policy = data.aws_iam_policy_document.ops-manager.json
-}
-
 data "aws_iam_policy_document" "ops-manager" {
   statement {
     sid       = "OpsMgrInfoAboutCurrentInstanceProfile"
@@ -95,16 +80,6 @@ data "aws_iam_policy_document" "ops-manager" {
       aws_iam_role.ops-manager.arn,
       aws_iam_role.pas-blobstore.arn,
     ])
-  }
-
-  statement {
-    sid     = "OpsMgrS3Permissions"
-    effect  = "Allow"
-    actions = ["s3:*"]
-    resources = [
-      aws_s3_bucket.ops-manager-bucket.arn,
-      "${aws_s3_bucket.ops-manager-bucket.arn}/*"
-    ]
   }
 
   statement {
