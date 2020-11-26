@@ -18,9 +18,9 @@ anchors:
                 config/vars/download-vars
 
 -   s3-common: &s3-common
-        access_key_id: ((s3_access.client_id))
-        secret_access_key: ((s3_access.client_secret))
-        session_token: ((s3_access.session_token))
+        access_key_id: ((cloud_creds.client_id))
+        secret_access_key: ((cloud_creds.client_secret))
+        session_token: ((cloud_creds.session_token))
         region_name: ((s3_region_name))
 
 -   platform-automation-image: &platform-automation-image
@@ -163,7 +163,7 @@ jobs:
         params:
             STATE_FILE: om-state-$timestamp.yml
             OPSMAN_CONFIG_FILE: install-config/((iaas_type))/opsman.yml
-            AWS_SESSION_TOKEN: ((s3_access.session_token))
+            AWS_SESSION_TOKEN: ((cloud_creds.session_token))
             VARS_FILES: |
                 config/vars/((foundation))/install-((product))-vars.yml 
                 config/vars/((foundation))/tf-output.yml
@@ -228,21 +228,6 @@ jobs:
         <<: *add-terraform-yaml  
     -   task: prepare-tasks-with-secrets
         <<: *prepare-tasks-with-secrets
-
-    -   task: upload-product-via-opsman
-        image: platform-automation-image
-        file: platform-repo/tasks/tile-upload-via-opsman/task.yml
-        params:
-            ENV_FILE: config/vars/((foundation))/env/env.yml
-            OM_VAR_om_login: ((om_login))
-            OM_VAR_domain: ((domain))
-            OM_VAR_foundation: ((foundation))
-            OM_VAR_pivnet_token: ((pivnet_token))
-            DOWNLOAD_CONFIG_FILE: config/download-config/tas.yml
-            PRODUCT_VARS_FILE: config/vars/((foundation))/install-tas-vars.yml
-            TF_VARS_FILE: config/vars/((foundation))/tf-output.yml
-        input_mapping:
-            config: platform-repo
 
     -   task: download-((product))
         image: platform-automation-image
@@ -406,6 +391,7 @@ jobs:
             IAAS_TYPE: ((iaas_type))
             OM_VAR_om_login: ((om_login))
             OM_VAR_cloud_creds: ((cloud_creds))
+            AWS_SESSION_TOKEN: ((cloud_creds.session_token))
         input_mapping:
             config: platform-repo
             env: platform-repo

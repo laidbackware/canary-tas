@@ -14,7 +14,7 @@ opsman-configuration:
 
     # Optional
     # vm_name: ops-manager-vm    # default - ops-manager-vm
-    # boot_disk_size: 100        # default - 200 (GB)
+    boot_disk_size: ((ops_manager_disk_size))        # default - 200 (GB)
     # instance_type: m5.large    # default - m5.large
                                   # NOTE - not all regions support m5.large
     # assume_role: "arn:aws:iam::..." # necessary if a role is needed to authorize
