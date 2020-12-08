@@ -2,7 +2,7 @@
 pivnet-api-token: ((pivnet_token))
 pivnet-file-glob: metric-store-*.pivotal
 pivnet-product-slug: p-metric-store
-product-version: 1.4.4
+product-version: 1.5.1
 
 
 s3-auth-type: iam
