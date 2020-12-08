@@ -1,6 +1,6 @@
 ---
 pivnet-api-token: ((pivnet_token))
-pivnet-file-glob: ((opsman_pivnet_glob))
+pivnet-file-glob: app-metrics-*.pivotal
 pivnet-product-slug: apm
 product-version: 2.0.5
 

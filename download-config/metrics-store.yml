@@ -1,6 +1,6 @@
 ---
 pivnet-api-token: ((pivnet_token))
-pivnet-file-glob: ((opsman_pivnet_glob))
+pivnet-file-glob: metric-store-*.pivotal
 pivnet-product-slug: p-metric-store
 product-version: 1.4.4
 
