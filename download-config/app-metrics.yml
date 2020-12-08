@@ -3,6 +3,7 @@ pivnet-api-token: ((pivnet_token))
 pivnet-file-glob: app-metrics-*.pivotal
 pivnet-product-slug: apm
 product-version: 2.0.5
+stemcell-iaas: aws
 
 s3-auth-type: iam
 s3-bucket: ((buckets.pivnet_products))
