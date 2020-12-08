@@ -1,0 +1,9 @@
+---
+pivnet-api-token: ((pivnet_token))
+pivnet-file-glob: ((opsman_pivnet_glob))
+pivnet-product-slug: apm
+product-version: 2.0.5
+
+s3-auth-type: iam
+s3-bucket: ((buckets.pivnet_products))
+s3-region-name: ((s3_region_name))
